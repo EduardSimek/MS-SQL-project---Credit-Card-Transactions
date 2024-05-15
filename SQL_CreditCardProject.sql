@@ -263,7 +263,7 @@ SELECT
         WHEN TotalDailySpending < (AverageSpending - 3 * StdDevSpending) THEN 'Low Anomaly'
         ELSE 'Normal'
     END AS AnomalyStatus
-FROMa
+FROM
     DailyStats
 ORDER BY
     city, transaction_date;
