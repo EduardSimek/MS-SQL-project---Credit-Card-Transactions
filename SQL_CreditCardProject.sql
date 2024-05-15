@@ -239,6 +239,7 @@ FROM CreditCardCSV
 GROUP BY card_type, exp_type 
 ORDER BY card_type, TotalAmount DESC
 
+    
 --Output anomaly detection in daily Transactions
 WITH DailyStats AS (
     SELECT
@@ -273,3 +274,34 @@ SELECT TOP 1 exp_type, gender, COUNT(*) Frequency
 FROM CreditCardCSV 
 GROUP BY exp_type, gender 
 ORDER BY exp_type, Frequency DESC
+
+    
+--Write a SQL query which will find city with lowest percentage spend for platinum and gold card types
+SELECT city, (GP_total / total) * 100 as perc 
+FROM (
+	SELECT city, SUM(CASE WHEN card_type IN ('Gold', 'Platinum') THEN amount END) GP_total, 
+				SUM(amount) total 
+	FROM CreditCardCSV 
+	GROUP BY city
+) m 
+WHERE (GP_total/total)*100 IS NOT NULL 
+ORDER BY perc DESC
+
+
+--Write a query to print highest_exp_type and lowest_exp_type in each city
+with m as 
+(
+select city, exp_type, sum(amount) as spend
+from CreditCardCSV 
+group by city, exp_type 
+) , cte as 
+(
+select *,
+dense_rank() over(partition by city order by spend desc) as highest_rank,
+dense_rank() over(partition by city order by spend asc) as lowest_rank
+from m 
+)
+select cte.city, 
+(case when cte.highest_rank = 1 then cte.exp_type end) as highest_exp_type,
+(case when cte1.lowest_rank = 1 then cte1.exp_type end) as lowest_exp_type
+from cte join cte as cte1 on cte.city = cte1.city and cte.highest_rank = 1 and cte1.lowest_rank =1 
